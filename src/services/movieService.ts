@@ -6,10 +6,10 @@ const myToken = import.meta.env.VITE_API_TOKEN;
 
 interface SearchMovieResponse {
     results: Movie[],
-    page?: number
+    total_pages: number,
 }
 
-async function fetchMovies(searchValue: string): Promise<Movie[]> {
+async function fetchMovies(searchValue: string, page: number): Promise<SearchMovieResponse> {
     try {   
         const res = await axios.get<SearchMovieResponse>(
             "https://api.themoviedb.org/3/search/movie", {
@@ -17,7 +17,7 @@ async function fetchMovies(searchValue: string): Promise<Movie[]> {
                query: searchValue,
                include_adult: false,
                language: "en-US",
-               page: 1,
+               page,
 
             },
                 headers: {
@@ -26,8 +26,8 @@ async function fetchMovies(searchValue: string): Promise<Movie[]> {
         }
         );
 
-        console.log(res.data.results);
-        return res.data.results;
+        console.log(res.data);
+        return res.data;
         
 } catch (error) {
         console.error(error);
