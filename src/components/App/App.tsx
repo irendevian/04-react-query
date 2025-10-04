@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import SearchBar from '../SearchBar/SearchBar';
+import { useQuery } from '@tanstack/react-query';
 import './App.module.css'
 import type { Movie } from '../../types/movie';
 import fetchMovies from '../../services/movieService';
@@ -10,39 +11,32 @@ import Loader from '../Loader/Loader';
 import MovieModal from '../MovieModal/MovieModal';
   
 
-
 function App() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [error, setError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [searchValue, setSearchValue] = useState<string>('');
   const [selectedMovie, setSelectedMovie] = useState<Movie|null>(null);
-  
-  const handleSearch = async (searchValue: string) => {
-    try {
-      setError(false);
-      setIsLoading(true);
-      setMovies([]);
-      const newMovie = await fetchMovies(searchValue);
 
-      if (newMovie.length === 0) {
-        toast.error("No movies found for your request.");
-      }
-      setMovies(newMovie);
-    } catch (error) {
-      console.error(error);
-      setError(true);
-    } finally {
-      setIsLoading(false);
+  const handleSearch = (searchValue: string) => {
+    console.log("vulue", searchValue);
+    if (!searchValue.trim()) {
+      toast.error("Please enter a movie name!");
+      return;
     }
+    setSearchValue(searchValue);
   };
 
-  const closeModal = () => setSelectedMovie(null);
+ const { data: movies = [], isLoading, isError } = useQuery({
+    queryKey: ['movie', searchValue],
+    queryFn: () => fetchMovies(searchValue),
+    enabled: Boolean(searchValue),
+ })
+  
+   const closeModal = () => setSelectedMovie(null);
 
-  return (
+   return (
     <>
       <SearchBar onSubmit={handleSearch} />
       {isLoading && <Loader /> }
-      {error && <ErrorMessage /> }
+      {isError && <ErrorMessage /> }
       {movies.length > 0 ? <MovieGrid movies={movies} onSelect={(movie) => setSelectedMovie(movie)}/> : null}
       {selectedMovie && <MovieModal movie={selectedMovie} onClose={closeModal}/>}
       <Toaster position='top-center' />
