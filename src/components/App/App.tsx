@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SearchBar from '../SearchBar/SearchBar';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import css from './App.module.css'
 import type { Movie } from '../../types/movie';
 import fetchMovies from '../../services/movieService';
@@ -23,18 +23,25 @@ function App() {
       return;
     }
     setSearchValue(searchValue);
+    setPage(1);
   };
 
- const { data, isLoading, isError } = useQuery({
-    queryKey: ['movie', searchValue, page],
+ const { data, isLoading, isError, isSuccess } = useQuery({
+    queryKey: ['movies', searchValue, page],
     queryFn: () => fetchMovies(searchValue, page),
     enabled: Boolean(searchValue),
+    placeholderData: keepPreviousData,
  })
   
   const closeModal = () => setSelectedMovie(null);
   const movies = data?.results ?? [];
   const totalPages = data?.total_pages ?? 0;
 
+  useEffect(() => {
+    if (isSuccess && movies.length === 0) {
+      toast.error('No movies found for your search.')
+    }
+  }, [isSuccess, movies.length]) 
 
    return (
     <>
